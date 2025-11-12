@@ -1,8 +1,10 @@
 from prompt_toolkit.shortcuts import radiolist_dialog, input_dialog, message_dialog
-import json, xmltodict, pafy
+import re, json, xmltodict
+from yt_dlp import YoutubeDL
 from theme import theme
 from cache_request import *
 from youtube_search import YoutubeSearch
+from pprint import pprint
 
 def search_podcasts():
     search_term = input_dialog(title='Playman',text='search podcasts', style=theme).run()
@@ -28,10 +30,22 @@ def  search_youtube():
     search_term = input_dialog(title='Playman',text='search youtube', style=theme).run()
 
     selections = [(f'https://www.youtube.com/{l.get("url_suffix")}', l.get("title")) for l in YoutubeSearch(search_term).to_dict()]
+
+    for i in range(len(selections)):
+        selections[i] = (re.sub(r'.*v=([^&]+).*', r'\1', selections[i][0]), selections[i][1])
+
     if not len(selections): return
     choice = radiolist_dialog(title="Playman", text="Choose one:", values=selections, style=theme).run()
 
-    return pafy.new(choice).getbestaudio().url
+    yt_dl_opts = {'cookiefile': 'cookie.txt', 'quiet': True, 'force_generic_extractor': True, 'noplaylist': True, 'simulate': True, 'format': 'bestaudio/best', 'skip_download': True}
+    info = YoutubeDL(yt_dl_opts).extract_info(choice, download=False)
+    for f in info['formats']:
+        if f.get('acodec') != 'none' and f.get('url'):
+            url = f.get('url')
+            break
+
+    if not url: return
+    return url
 
 def search_radio():
     search_term = input_dialog(title='Playman',text='search radio', style=theme).run()
