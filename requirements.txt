@@ -1,3 +1,4 @@
+yt-dlp==2025.10.14
 pafy==0.5.5
 prompt-toolkit==3.0.30
 python-vlc==3.0.16120
